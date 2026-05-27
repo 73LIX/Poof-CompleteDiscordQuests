@@ -41,13 +41,13 @@ Note : The **process name** is nothing but the target game's executable name whi
 poof 'genshinimpact.exe'
 
 # With rich presence too:
-poof ' genshinimpact.exe' --app-id 1234567890
+poof 'genshinimpact.exe' --app-id 1234567890
 
 # Use prctl rename instead of binary copy:
-poof ' genshinimpact.exe' --app-id 1234567890 --method prctl
+poof 'genshinimpact.exe' --app-id 1234567890 --method prctl
 
 # Just RPC, no fake process:
-poof ' genshinimpact.exe' --app-id 1234567890 --no-process
+poof 'genshinimpact.exe' --app-id 1234567890 --no-process
 ```
 
 ## Find the Process Names

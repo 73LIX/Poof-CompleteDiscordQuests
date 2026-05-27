@@ -24,7 +24,7 @@ It only:<br> Copies `/bin/sleep` to a temporary file with the game's name and ru
 ## Installation
 
 ```bash
-pip install poof
+pip install poof-discord
 ```
 
 ## How it works

@@ -1,11 +1,13 @@
 # Poof
 
-Spoof game processes to complete Discord quests by creating a lightweight process that mimics a target game's executable.
+Spoof game processes **and** complete Discord quests via the API — all from the command line.
 
 ## Safety
 
 This does **not** modify the Discord client, inject code, hook processes, or tamper with Discord's memory.
-It only:<br> Copies `/bin/sleep` to a temporary file with the game's name and runs it (just a standard Linux process and nothing related to discord)
+- Process spoofing copies `/bin/sleep` to a temporary file with the game's name (just a standard Linux process)
+- Quest API mode sends HTTP requests to Discord's API (same as any other API client)
+- **Quest API mode requires your Discord auth token**
 
 ## Table of Contents
 
@@ -19,7 +21,8 @@ It only:<br> Copies `/bin/sleep` to a temporary file with the game's name and ru
 
 - Linux (uses `prctl`, Unix sockets, `/proc`)
 - Python 3.8+
-- Discord desktop client running
+- Discord desktop client running (for process spoofing)
+- Discord auth token (for quest API mode)
 
 ## Installation
 
@@ -29,27 +32,51 @@ pip install poof-discord
 
 ## How it works
 
-1. **Fake Process** — Copies `/bin/sleep` to `/tmp/<game_name>` and runs it. Discord's process scanner reads `/proc/<pid>/exe` and sees a process named exactly like the target game, auto-registering it as your activity.<br>
-Note : The **process name** is nothing but the target game's executable name which you can get from the Discord-Detectable-Apps repo.
+1. **Process spoofing** — Copies `/bin/sleep` to `/tmp/<game_name>` and runs it. Discord's process scanner reads `/proc/<pid>/exe` and sees a process named like the target game, auto-registering it as your activity.<br>
+Note : The process name is nothing but the target game's executable name which you can get from the Discord-Detectable-Apps repo.
 
-2. **Discord RPC** *(optional)* — Connects to Discord's Unix socket and sends a `SET_ACTIVITY` frame with the game's Application ID (same protocol the official GameSDK uses).
+2. **Discord RPC** *(optional)* — Connects to Discord's Unix socket and sends a `SET_ACTIVITY` frame with the game's Application ID.
+
+3. **Quest API** *(new)* — Sends authenticated requests to Discord's quest API:
+   - `GET /api/v9/users/@me/quests` — list enrolled quests
+   - `POST /api/v9/quests/{id}/heartbeat` — send periodic heartbeats
 
 ## Usage
 
+### Fake process
+
 ```bash
-# Process-only (enough for quests):
+# Process-only (enough for most quests):
 poof 'genshinimpact.exe'
+```
 
-# With rich presence too:
-poof 'genshinimpact.exe' --app-id 1234567890
+### Quest API mode
 
-# Use prctl rename instead of binary copy:
-poof 'genshinimpact.exe' --app-id 1234567890 --method prctl
+First, get your Discord auth token:
 
-# Just RPC, no fake process:
-poof 'genshinimpact.exe' --app-id 1234567890 --no-process
+```bash
+#follow the instructions to aquire the token:
+poof token
+```
+
+```bash
+#cache your token
+poof token "PASTE YOUR TOKEN HERE"
+```
+
+Now list and complete quests:
+
+```bash
+#list enrolled quests
+poof quests
+
+#complete all active quests
+poof complete
+
+#complete a specific quest
+poof complete --quest-id <quest_id>
 ```
 
 ## Find the Process Names
 
-- **Process names**: [Discord-Detectable-Apps](https://github.com/LoneDestroyer/Discord-Detectable-Apps/blob/main/detectable_apps.txt)
+Process names: [Discord-Detectable-Apps](https://github.com/LoneDestroyer/Discord-Detectable-Apps/blob/main/detectable_apps.txt)

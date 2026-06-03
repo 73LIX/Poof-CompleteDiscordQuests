@@ -7,7 +7,7 @@ Spoof game processes **and** complete Discord quests via the API — all from th
 This does **not** modify the Discord client, inject code, hook processes, or tamper with Discord's memory.
 - Process spoofing copies `/bin/sleep` to a temporary file with the game's name (just a standard Linux process)
 - Quest API mode sends HTTP requests to Discord's API (same as any other API client)
-- **Quest API mode requires your Discord auth token**
+- **Quest API mode requires your Discord auth token** -- This will be cached and saved to ~/.config/poof
 
 ## Table of Contents
 
@@ -79,4 +79,4 @@ poof complete --quest-id <quest_id>
 
 ## Find the Process Names
 
-Process names: [Discord-Detectable-Apps](https://github.com/LoneDestroyer/Discord-Detectable-Apps/blob/main/detectable_apps.txt)
+Process names: [Discord-Detectable-Apps](https://github.com/LoneDestroyer/Discord-Detectable-Apps/blob/main/detectable_apps.txt) || [The-Reliable-Reddit](https://www.reddit.com/r/DiscordQuests/hot/)

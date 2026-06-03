@@ -292,7 +292,17 @@ def fmt_dur(seconds):
     return f"{m}m {s}s" if m else f"{s}s"
 
 
+def _is_expired(quest):
+    expires_at = quest.get("config", {}).get("expires_at")
+    if not expires_at:
+        return False
+    return time.time() > _parse_iso(expires_at)
+
+
 def get_progress(quest):
+    if _is_expired(quest):
+        return -3  # expired
+
     config = quest.get("config", {})
     status = quest.get("user_status") or {}
     if status.get("completed_at"):
@@ -345,6 +355,9 @@ def handle_quests(api):
         elif prog == -2:
             pstr = "Unsupported"
             icon = "⏭"
+        elif prog == -3:
+            pstr = "EXPIRED"
+            icon = "❌"
         else:
             cur, tgt, _ = prog
             pstr = f"{fmt_dur(cur)} / {fmt_dur(tgt)}"
@@ -362,27 +375,41 @@ def handle_complete(api, quest_id=None):
     quests = data.get("quests", [])
 
     if quest_id:
-        candidates = [q for q in quests if q.get("id") == quest_id]
-        if not candidates:
+        q = next((q for q in quests if q.get("id") == quest_id), None)
+        if not q:
             print(f"[-] Quest '{quest_id}' not found.")
             sys.exit(1)
-        _complete_quests(api, candidates)
+        if _is_expired(q):
+            print(f"[-] Quest '{quest_id}' has expired.")
+            sys.exit(1)
+        _complete_quests(api, [q])
         return
 
     active = []
+    skipped = {"expired": 0, "completed": 0, "unsupported": 0}
     for q in quests:
         prog = get_progress(q)
-        if prog is None or prog == -1 or prog == -2:
+        if prog == -3:
+            skipped["expired"] += 1
+            continue
+        if prog is None:
+            skipped["completed"] += 1
+            continue
+        if prog == -1 or prog == -2:
             continue
         cur, tgt, _ = prog
         if cur < tgt:
             active.append(q)
 
     if not active:
-        print("[*] No active quests to complete.")
+        parts = [s for s in [f"{k}={v}" for k, v in skipped.items() if v > 0]]
+        extra = f" ({', '.join(parts)})" if parts else ""
+        print(f"[*] No active quests to complete.{extra}")
         return
 
-    print(f"[*] Found {len(active)} active quest(s)")
+    parts = [s for s in [f"{k}={v}" for k, v in skipped.items() if v > 0]]
+    extra = f" ({', '.join(parts)})" if parts else ""
+    print(f"[*] Found {len(active)} active quest(s){extra}")
     _complete_quests(api, active)
 
 
@@ -735,12 +762,15 @@ def main():
 
         if a.token:
             api = QuestAPI(a.token)
-            print()
-            handle_complete(api)
+            print("[*] Token provided — showing quest summary (use 'poof complete' separately):")
+            handle_quests(api)
+            if not a.no_spoof:
+                print()
+                run_spoof_loop(None)
         elif not a.no_spoof:
             run_spoof_loop(None)
         else:
-            print("[*] Use --token to also complete quests, or run: poof complete")
+            print("[*] Use --token to see quest info, or run: poof complete")
 
     elif cmd == "quests":
         p = argparse.ArgumentParser(prog=prog + " quests", description="List enrolled quests")
